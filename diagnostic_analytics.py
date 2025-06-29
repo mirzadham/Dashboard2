@@ -83,6 +83,8 @@ def show(df):
         ax.legend(title='Interference Level')
         plt.xticks(rotation=45)
         st.pyplot(fig)
+
+        show_roi_calculator(df)
         def show_roi_calculator(df):
             st.subheader("💰 Mental Health Program ROI Calculator")
     
