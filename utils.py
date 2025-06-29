@@ -14,6 +14,10 @@ def load_data():
 
 @st.cache_data
 def clean_and_merge_data(df_2014, df_2016):
+    # Add a 'year' column to each DataFrame before cleaning and merging
+    df_2014['year'] = 2014
+    df_2016['year'] = 2016
+
     # Define mappings from original column names to standard names
     map_2014 = {
         'Age': 'age', 'Gender': 'gender', 'self_employed': 'self_employed',
@@ -23,7 +27,7 @@ def clean_and_merge_data(df_2014, df_2016):
         'anonymity': 'anonymity', 'leave': 'leave', 'mental_health_consequence': 'mental_health_consequence',
         'coworkers': 'coworkers', 'supervisor': 'supervisor'
     }
-    df_2014_clean = df_2014[list(map_2014.keys())].rename(columns=map_2014)
+    df_2014_clean = df_2014[list(map_2014.keys()) + ['year']].rename(columns=map_2014)
 
     map_2016 = {
         'What is your age?': 'age', 'What is your gender?': 'gender', 'Are you self-employed?': 'self_employed',
@@ -42,7 +46,7 @@ def clean_and_merge_data(df_2014, df_2016):
         'Would you feel comfortable discussing a mental health disorder with your coworkers?': 'coworkers',
         'Would you feel comfortable discussing a mental health disorder with your direct supervisor(s)?': 'supervisor'
     }
-    df_2016_clean = df_2016[list(map_2016.keys())].rename(columns=map_2016)
+    df_2016_clean = df_2016[list(map_2016.keys()) + ['year']].rename(columns=map_2016)
 
     df_merged = pd.concat([df_2014_clean, df_2016_clean], ignore_index=True)
 
@@ -135,6 +139,17 @@ def setup_page():
             background-color: #1f77b4;
             color: white;
             border-radius: 0.5rem;
+        }
+        /* Custom styles for metrics with value and delta */
+        [data-testid="stMetricDelta"] svg {
+            display: none; /* Hide the delta arrow */
+        }
+        [data-testid="stMetricValue"] {
+            font-size: 2.5rem; /* Make the value larger */
+        }
+        [data-testid="stMetricLabel"] {
+            font-size: 1rem; /* Adjust label size */
+            color: #dbe4ee; /* Lighter color for labels */
         }
     </style>
     """, unsafe_allow_html=True)
