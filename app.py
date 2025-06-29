@@ -6,6 +6,7 @@ from descriptive_analytics import show as show_descriptive
 from diagnostic_analytics import show as show_diagnostic
 from predictive_analytics import show as show_predictive
 from employee_profiling import show as show_profiling
+from professional_insights import show as show_pro_insights
 
 # Initialize page
 setup_page()
@@ -22,6 +23,7 @@ sections = {
     "🔍 Mental Wellness Correlations": show_diagnostic,
     "🤖 Mental Health Risk Assessment": show_predictive,
     "👥 Employee Profiling": show_profiling
+    "📊 Advanced Insights": show_pro_insights
 }
 selected = st.sidebar.radio("Navigate to:", list(sections.keys()))
 
