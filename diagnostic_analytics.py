@@ -24,25 +24,36 @@ def prepare_correlation_data(df):
     df_corr = df_corr[features_for_corr]
 
     # Map 'work_interfere' and 'leave' to numerical values first
-    interference_map = {'Never': 0, 'Rarely': 1, 'Sometimes': 2, 'Often': 3}
-    # Ensure 'work_interfere' is string before mapping and fill N/A
-    df_corr['work_interfere'] = df_corr['work_interfere'].astype(str).map(interference_map).fillna(0) # Fill N/A with 0 for correlation (no interference)
+    # Ensure all values are strings before mapping to handle potential mixed types or non-string NaNs
+    interference_map = {'Never': 0, 'Rarely': 1, 'Sometimes': 2, 'Often': 3, 'N/A': 0} # Explicitly map 'N/A' to 0 (no interference)
+    df_corr['work_interfere'] = df_corr['work_interfere'].astype(str).map(interference_map)
+    # Fill any NaNs that might result if there are values not in the map, default to 0
+    df_corr['work_interfere'].fillna(0, inplace=True)
 
     leave_map = {
         "Very easy": 0, "Somewhat easy": 1, "Don't know": 2, 
         "Somewhat difficult": 3, "Very difficult": 4
     }
-    # Ensure 'leave' is string before mapping and fill 'Don't know'
-    df_corr['leave'] = df_corr['leave'].astype(str).map(leave_map).fillna(leave_map["Don't know"]) 
+    df_corr['leave'] = df_corr['leave'].astype(str).map(leave_map)
+    # Fill any NaNs that might result, default to 'Don't know' numerical value
+    df_corr['leave'].fillna(leave_map["Don't know"], inplace=True)
 
     # Identify remaining categorical columns to one-hot encode
     # These are the ones that are still 'object' type and not 'treatment' (already int from utils.py)
     categorical_cols_to_encode = [col for col in df_corr.columns if df_corr[col].dtype == 'object' and col != 'treatment']
 
+    # Explicitly convert these columns to string type before one-hot encoding
+    # This is crucial to prevent TypeErrors from mixed data types
+    for col in categorical_cols_to_encode:
+        df_corr[col] = df_corr[col].astype(str)
+
     # Apply one-hot encoding using pd.get_dummies
     df_corr_encoded = pd.get_dummies(df_corr, columns=categorical_cols_to_encode, drop_first=True)
     
-    # Ensure 'treatment' is int (it should be from utils.py, but good to be explicit for safety)
+    # Ensure 'treatment' is int (it should be from utils.py, but adding robustness here)
+    # Convert to numeric, coerce errors (turn non-numeric into NaN), then fill any NaNs, then convert to int
+    df_corr_encoded['treatment'] = pd.to_numeric(df_corr_encoded['treatment'], errors='coerce')
+    df_corr_encoded['treatment'].fillna(0, inplace=True) # Default to 0 if NaN after coercion
     df_corr_encoded['treatment'] = df_corr_encoded['treatment'].astype(int)
 
     return df_corr_encoded
