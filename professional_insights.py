@@ -7,6 +7,10 @@ import seaborn as sns
 from scipy import stats
 
 def show(df):
+    st.write("🛠 Debug Mode Activated")  # Should appear immediately
+    st.write(f"Data shape: {df.shape}")  # Verify data is passed
+    if st.button("Test Button"):
+        st.success("Working!")
     st.header("💼 Advanced Workforce Insights")
     
     tab1, tab2, tab3 = st.tabs([
