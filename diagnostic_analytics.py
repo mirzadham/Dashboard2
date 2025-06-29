@@ -83,3 +83,39 @@ def show(df):
         ax.legend(title='Interference Level')
         plt.xticks(rotation=45)
         st.pyplot(fig)
+        def show_roi_calculator(df):
+    st.subheader("💰 Mental Health Program ROI Calculator")
+    
+    # Calculate baseline metrics
+    interference_cost = {
+        'Never': 0, 'Rarely': 0.05, 'Sometimes': 0.15, 'Often': 0.3
+    }
+    df['productivity_loss'] = df['work_interfere'].map(interference_cost)
+    
+    # User inputs
+    avg_salary = st.slider("Average Employee Salary ($)", 50000, 200000, 85000)
+    company_size = st.selectbox("Company Size", [100, 500, 1000, 5000, 10000])
+    
+    # ROI Calculation
+    benefits_df = df.groupby('benefits')['productivity_loss'].mean()
+    cost_savings = (benefits_df['No'] - benefits_df['Yes']) * avg_salary
+    
+    # Display
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Annual Savings per Employee", f"${cost_savings:,.0f}")
+    with col2:
+        st.metric("Total Company Savings", 
+                 f"${cost_savings * company_size:,.0f}",
+                 help="Based on current employee distribution")
+    with col3:
+        st.metric("Recommended Program Budget", 
+                 f"${avg_salary * 0.03:,.0f}/employee",
+                 help="3% of salary benchmark")
+    
+    st.caption("""
+    *Calculation methodology*: Productivity loss ranges from 0% (Never interferes) 
+    to 30% (Often interferes). Savings compare employees with vs without benefits.
+    """)
+
+# Add this to the show() function in diagnostic_analytics.py
