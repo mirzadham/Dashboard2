@@ -23,34 +23,29 @@ def prepare_correlation_data(df):
     # Filter for relevant columns
     df_corr = df_corr[features_for_corr]
 
-    # Map 'Yes'/'No'/etc. to numerical values for correlation calculation
-    # Only apply to columns that are not already numerical and need encoding
-    for col in df_corr.columns:
-        if df_corr[col].dtype == 'object':
-            # Handle 'work_interfere' separately due to its N/A value and specific order
-            if col == 'work_interfere':
-                # Map ordered categories to numbers, exclude 'N/A' for correlation
-                interference_map = {'Never': 0, 'Rarely': 1, 'Sometimes': 2, 'Often': 3}
-                df_corr[col] = df_corr[col].map(interference_map).fillna(0) # Fill N/A with 0 for correlation (no interference)
-            elif col == 'leave':
-                leave_map = {
-                    "Very easy": 0, "Somewhat easy": 1, "Don't know": 2, 
-                    "Somewhat difficult": 3, "Very difficult": 4
-                }
-                df_corr[col] = df_corr[col].map(leave_map).fillna(leave_map["Don't know"]) # Impute 'Don't know'
-            else:
-                le = LabelEncoder()
-                # Use a try-except block to handle cases where fit_transform might fail on NaNs, though they should be imputed
-                try:
-                    df_corr[col] = le.fit_transform(df_corr[col])
-                except ValueError:
-                    # Fallback for columns with unique values that can't be encoded, or already encoded
-                    pass
-    
-    # Exclude rows where 'work_interfere' was 'N/A' (now 0, as handled above) if we want to focus on actual interference
-    # For correlation, we can keep the 0s, as it implies 'no interference'.
+    # Map 'work_interfere' and 'leave' to numerical values first
+    interference_map = {'Never': 0, 'Rarely': 1, 'Sometimes': 2, 'Often': 3}
+    # Ensure 'work_interfere' is string before mapping and fill N/A
+    df_corr['work_interfere'] = df_corr['work_interfere'].astype(str).map(interference_map).fillna(0) # Fill N/A with 0 for correlation (no interference)
 
-    return df_corr
+    leave_map = {
+        "Very easy": 0, "Somewhat easy": 1, "Don't know": 2, 
+        "Somewhat difficult": 3, "Very difficult": 4
+    }
+    # Ensure 'leave' is string before mapping and fill 'Don't know'
+    df_corr['leave'] = df_corr['leave'].astype(str).map(leave_map).fillna(leave_map["Don't know"]) 
+
+    # Identify remaining categorical columns to one-hot encode
+    # These are the ones that are still 'object' type and not 'treatment' (already int from utils.py)
+    categorical_cols_to_encode = [col for col in df_corr.columns if df_corr[col].dtype == 'object' and col != 'treatment']
+
+    # Apply one-hot encoding using pd.get_dummies
+    df_corr_encoded = pd.get_dummies(df_corr, columns=categorical_cols_to_encode, drop_first=True)
+    
+    # Ensure 'treatment' is int (it should be from utils.py, but good to be explicit for safety)
+    df_corr_encoded['treatment'] = df_corr_encoded['treatment'].astype(int)
+
+    return df_corr_encoded
 
 
 def show(df):
@@ -202,4 +197,3 @@ def show(df):
             st.markdown("""
             **Insight:** Compare comfort levels with coworkers vs. supervisors. A significant gap suggests a need for management training or fostering a more open leadership culture.
             """)
-
